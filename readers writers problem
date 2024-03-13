@@ -1,0 +1,78 @@
+In order to handle the problem, it must be ensured that no concurrent processes cause any form of data inconsistency in the operating system. The reader-writer problem in
+os can be assumed as follows:-
+
+There are multiple processes that can be either readers and writers with a shared resource between them, let us suppose it as a file or a database.
+In case there are two processes with both trying to access the resource simultaneously at the same instance. Although it does not matter how many 
+readers can access it simultaneously, it must be kept in mind that only one writer can write it at a time.
+
+
+#Various Cases of Reader-Writer Problem
+There are certain cases that I must look forward to understanding the reader-writer problem in os and how it impacts the data inconsistency problem that must be avoided.
+
+*Case One
+Two processes cannot be allowed to write into shared data parallelly thus they must wait to get access to write into it.
+
+*Case Two
+Even if one process is writing on data and the other is reading then also they cannot be allowed to have the access to shared resources for the reason that a reader will
+  be reading an incomplete value in this case.
+
+*Case Three
+The other similar scenario where one process is reading from the data and another writing on it, on the shared resource, it cannot be allowed. Because the writer updates
+some data that is not available to the reader. The solution being that the writer completes successfully and gives access.
+
+*Case Four
+In the case that both processes are reading the data then sharing of resources among both the processes will be allowed as it is a case free from any such anomaly because
+reading does not modify the pre-existing data.
+
+The Solution to the Problem
+In order to solve the problem, we maintain three variables, namely, mutex, semaphore, and readCount.
+
+Mutex makes the process to release and acquire a lock when the readCount is being updated. The lock is acquired when the readCount is updated and decremented back after
+it has done performing the operation. The writer waits for the semaphore until it is its turn to write and increments for other processes to write.
+
+The idea remains to use semaphores when a reader enters the critical section up until it exits the critical section such that no writer can enter in between as it can
+cause data inconsistency. A semaphore is used to prevent writers from accessing the resource while there are one or more readers accessing it.
+
+Code:
+#The given code below is the code for the writer’s side.
+
+while (TRUE) {
+    // Wait on the "w" semaphore to acquire access to the resource
+    wait(w);
+
+    // Perform the necessary write operation(s) on the resource
+    // ...
+
+    // Signal the "w" semaphore to allow other writer processes to access the resource
+    signal(w);
+}
+
+
+#Given below is the code for readers side:-
+
+while (TRUE) { // Loop indefinitely
+    // Acquire lock
+    wait(m); // Wait for the mutex semaphore to be available
+
+    readCount++; // Increment the number of processes doing the read operation
+    if (readCount == 1) {
+        wait(w); // If this is the first reader, wait for writer semaphore to be available
+    }
+
+    // Release lock
+    signal(m); // Signal mutex semaphore to allow other processes to access the critical section
+
+    /* Perform the reading operation */
+    // Here we assume that the necessary code to read from the resource has been added
+
+    // Acquire lock
+    wait(m); // Wait for the mutex semaphore to be available
+
+    readCount--; // Decrement the number of processes doing the read operation
+    if (readCount == 0) {
+        signal(w); // If this is the last reader, signal writer semaphore to allow writer processes to access the critical section
+    }
+
+    // Release lock
+    signal(m); // Signal mutex semaphore to allow other processes to access the critical section
+}
